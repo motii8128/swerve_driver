@@ -18,6 +18,7 @@ fn main()->Result<(), DynError>
     let subscriber = node.create_subscriber::<geometry_msgs::msg::Twist>("/cmd_vel", None)?;
     let left_power_publisher = node.create_publisher::<std_msgs::msg::Float32>("motor/power/left", None)?;
     let right_power_publisher = node.create_publisher::<std_msgs::msg::Float32>("motor/power/right", None)?;
+    // degree
     let direction_publisher = node.create_publisher::<std_msgs::msg::Float32>("motor/direction", None)?;
 
     let mut selector = ctx.create_selector()?;
@@ -42,14 +43,18 @@ fn main()->Result<(), DynError>
 
             // Calc
             let target_vec = swerve_driver::get_vec_power(x_vec, y_vec);
-            let target_theta = swerve_driver::get_wheel_direction(x_vec, y_vec);
+            let target_direction = swerve_driver::get_wheel_direction(x_vec, y_vec);
             
             // send message
             l_pow_msg.data = target_vec * 0.5 + rotation_vec * 0.5;
             r_pow_msg.data = target_vec * 0.5 - rotation_vec * 0.5;
-            direction_msg.data = target_theta - history_direction;
+            direction_msg.data = target_direction - history_direction;
 
             let _ = left_power_publisher.send(&l_pow_msg);
+            let _ = right_power_publisher.send(&r_pow_msg);
+            let _ = direction_publisher.send(&direction_msg);
+
+            history_direction = target_direction;
         }),
     );
 
