@@ -22,7 +22,7 @@ jobs:
 
     - name: pre build
       run: |
-        source /opt/ros/noetic/setup.bash
+        source /opt/ros/humble/setup.bash
         cd ${CATKIN_WS}/src/swerve_driver
         git submodule update --init --recursive
         rosdep update
