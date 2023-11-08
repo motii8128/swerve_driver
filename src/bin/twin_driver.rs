@@ -22,7 +22,7 @@ fn main()->Result<(), DynError>
 
     let mut selector = ctx.create_selector()?;
 
-    let mut history_direction = get_f64_parameter(node.get_name(), "init_wheel_direction", 90.0);
+    let mut history_direction = get_f64_parameter(node.get_name(), "init_wheel_direction", 90.0) as f32;
 
     let log = Logger::new(node.get_name());
     pr_info!(log, "Start:{}", node.get_name());
@@ -30,12 +30,26 @@ fn main()->Result<(), DynError>
     selector.add_subscriber(
         subscriber, 
         Box::new(move |msg|{
+            // message
+            let mut l_pow_msg = std_msgs::msg::Float32::new().unwrap();
+            let mut r_pow_msg = std_msgs::msg::Float32::new().unwrap();
+            let mut direction_msg = std_msgs::msg::Float32::new().unwrap();
+
+            // Get Vector
             let x_vec = msg.linear.x as f32;
             let y_vec = msg.linear.y as f32;
             let rotation_vec = msg.angular.z as f32;
 
+            // Calc
+            let target_vec = swerve_driver::get_vec_power(x_vec, y_vec);
             let target_theta = swerve_driver::get_wheel_direction(x_vec, y_vec);
             
+            // send message
+            l_pow_msg.data = target_vec * 0.5 + rotation_vec * 0.5;
+            r_pow_msg.data = target_vec * 0.5 - rotation_vec * 0.5;
+            direction_msg.data = target_theta - history_direction;
+
+            let _ = left_power_publisher.send(&l_pow_msg);
         }),
     );
 
