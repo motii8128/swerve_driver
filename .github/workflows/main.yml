@@ -1,32 +1,36 @@
-name: Rust 
-
-on: push
+name: ROS build test
+on: [push]
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-22.04
+    env:
+      CATKIN_WS: /home/runner/work/ros2_ws
     steps:
-    - name: Checkout Crate
-      uses: actions/checkout@v3
-    - name: Set Toolchain
-      # https://github.com/dtolnay/rust-toolchain
-      uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: stable
-        components: rustfmt, clippy
-    - name: Run check
-      run: cargo check
-    - name: Run rustfmt
-      run: cargo fmt --all -- --check
-    - name: Run clippy
-      run: cargo clippy -- -D warnings
+    - uses: actions/checkout@v2
 
-  test:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout Crate
-      uses: actions/checkout@v3
-    - name: Set Toolchain
-      uses: dtolnay/rust-toolchain@stable
-    - name: Run test
-      run: cargo test
+    - name: Setup ROS
+      uses: ros-tooling/setup-ros@v0.6
+      with:
+        required-ros-distributions: humble
+
+    - name: Init workspace
+      run: |
+        source /opt/ros/humble/setup.bash
+        mkdir -p ${CATKIN_WS}/src
+        ln -s ${GITHUB_WORKSPACE} ${CATKIN_WS}/src/
+
+    - name: pre build
+      run: |
+        source /opt/ros/noetic/setup.bash
+        cd ${CATKIN_WS}/src/swerve_driver
+        git submodule update --init --recursive
+        rosdep update
+        rosdep install -i -y --from-paths ./
+
+    - name: build
+      run: |
+        source /opt/ros/humble/setup.bash
+        cd ${CATKIN_WS}
+        colcon test
+        
