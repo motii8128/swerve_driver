@@ -22,7 +22,7 @@ fn main()->Result<(), DynError>
 
     let mut selector = ctx.create_selector()?;
 
-    let mut history_direction = get_f64_parameter(node.get_name(), "init_pose", 90.0);
+    let mut history_direction = get_f64_parameter(node.get_name(), "init_wheel_direction", 90.0);
 
     let log = Logger::new(node.get_name());
     pr_info!(log, "Start:{}", node.get_name());
@@ -32,6 +32,7 @@ fn main()->Result<(), DynError>
         Box::new(move |msg|{
             let x_vec = msg.linear.x as f32;
             let y_vec = msg.linear.y as f32;
+            let rotation_vec = msg.angular.z as f32;
 
             let target_theta = swerve_driver::get_wheel_direction(x_vec, y_vec);
             
