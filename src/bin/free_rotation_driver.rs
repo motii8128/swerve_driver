@@ -24,6 +24,7 @@ fn main()->Result<(), DynError>
     let mut selector = ctx.create_selector()?;
 
     let mut history_direction = get_f64_parameter(node.get_name(), "init_wheel_direction", 90.0) as f32;
+    let wheel_power = get_f64_parameter(node.get_name(), "wheel_power", 0.2) as f32;
 
     let log = Logger::new(node.get_name());
     pr_info!(log, "Start:{}", node.get_name());
@@ -46,8 +47,8 @@ fn main()->Result<(), DynError>
             let target_direction = swerve_driver::get_free_wheel_direction(x_vec, y_vec);
             
             // send message
-            l_pow_msg.data = target_vec * 0.5 + rotation_vec * 0.5;
-            r_pow_msg.data = target_vec * 0.5 - rotation_vec * 0.5;
+            l_pow_msg.data = (target_vec * 0.5)*wheel_power + rotation_vec * 0.5;
+            r_pow_msg.data = (target_vec * 0.5)*wheel_power - rotation_vec * 0.5;
             direction_msg.data = target_direction - history_direction;
 
             let _ = left_power_publisher.send(&l_pow_msg);
